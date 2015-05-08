@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+ruby "2.1.0", engine: "rbx", engine_version: "2.5.3"
+gem 'pry'
+gem 'celluloid'
+gem 'celluloid-io'
