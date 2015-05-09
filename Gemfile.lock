@@ -7,18 +7,29 @@ GEM
       celluloid (>= 0.16.0)
       nio4r (>= 1.1.0)
     coderay (1.1.0)
+    ffi (1.9.8-java)
     hitimes (1.2.2)
+    hitimes (1.2.2-java)
     method_source (0.8.2)
     nio4r (1.1.0)
+    nio4r (1.1.0-java)
     pry (0.10.1)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    pry (0.10.1-java)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+      spoon (~> 0.0)
     slop (3.6.0)
+    spoon (0.0.4)
+      ffi
     timers (4.0.1)
       hitimes
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES

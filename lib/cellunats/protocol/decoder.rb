@@ -1,44 +1,83 @@
+require 'celluloid'
+require 'json'
 module CelluNATS
   module Protocol
-    class Decoder
+    class Decoder < String
+
+      include Celluloid
+
+      attr_reader :events
+
+      def initialize
+        @buffer = ''.force_encoding Encoding::ASCII_8BIT
+        @expecting_payload = false
+        @events = []
+      end
+
+      def <<(data)
+        @buffer << data
+        async.process_buffer
+        true # keep simplest return through the proxy
+      end
+
+      def process_buffer
+        parse_buffer
+        #puts "processing! expecting=#{@expecting_payload}"
+        if @expecting_payload
+          puts "WAITING FOR PAULAOD"
+          # take a specific amount from the buffer
+        else
+        end
+      end
+
+      #def run
+      #  loop { parse_buffer }
+      #end
 
       include Constants
 
-        # Don't call this if you are expecting a payload
-        # in any other cases call it once you received CR_LF
-        # with the line _not_ including CR_LF
-        def parse(line)
-          case line
-            when MSG_PATTERN
-              { 
-                type: EXPECT_PAYLOAD,
-                sub: $1, sid: $2.to_i, reply: $4, size: $5.to_i
-              }
-            when OK_PATTERN;      { type: OK }
-            when ERROR_PATTERN;   { type: ERROR, message: $1 }
-            when PING_PATTERN;    { type: PING }
-            when PONG_PATTERN;    { type: PONG }
-            when INFO_PATTERN;    { type: INFO, info: $1 }
-            else { type: UNKNOWN }
-          end
+      def process_payload
+        # check that the payload is complete
+        needed = @expecting_payload[:size]
+        return unless @buffer.size >= needed
+        payload = @buffer.slice! 0, needed
+        msg_event = {
+          type: MESSAGE,
+          payload: payload,
+          reply: @expecting_payload[:reply],
+          subscription: @expecting_payload[:subscription],
+          sid: @expecting_payload[:sid]
+        }
+        @expecting_payload = false
+        @events.push msg_event
+      end
+
+
+      def parse_buffer
+        event = case @buffer
+          when MSG_PATTERN
+            @expecting_payload = { 
+              subscription: $1, sid: $2.to_i, reply: $4, size: $5.to_i
+            }
+            { type: EXPECT_PAYLOAD }
+          when OK_PATTERN;      { type: OK }
+          when ERROR_PATTERN;   { type: ERROR, message: $1 }
+          when PING_PATTERN;    { type: PING }
+          when PONG_PATTERN;    { type: PONG }
+          when INFO_PATTERN
+            { type: INFO, info: JSON.parse($1) }
+          else 
+            # TODO consider protocol error posibility
+            return
         end
-
-        private
-
-        MSG_PATTERN      = %r{
-          MSG      \s+    #       the command and spaces
-          ([^\s]+) \s+    # 1   - the subject, spaces
-          ([^\s]+) \s+    # 2   - the id the client gave to for the subject, spaces
-          # the next optional match includes 3, the whole match, and 4, the inner match
-          ( (\S+)  \s+ )? # 4   - maybe a reply channel, spaces
-          (\d+)           # 5   - the length of the message payload
-        }xi               # case insensitive, ignores whitespace
-
-        OK_PATTERN       = /\+OK\s*/i
-        ERROR_PATTERN    = /-ERR\s+('.+')?/i
-        PING_PATTERN     = /PING\s*/i
-        PONG_PATTERN     = /PONG\s*/i
-        INFO_PATTERN     = /INFO\s+([^\r\n]+)/i 
+        @buffer = $'
+        # TODO symbolize hash keys
+        if @expecting_payload != false
+          process_payload
+        else
+          @events.push event
+        end
+      end
 
     end
   end

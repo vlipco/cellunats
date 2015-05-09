@@ -2,28 +2,30 @@ require 'rubygems'
 require 'bundler/setup'
 
 $LOAD_PATH.unshift './lib/cellunats/protocol'
+
 require 'protocol'
 require 'celluloid/autostart'
 require 'client'
 
+#class CelluNATS::Protocol::Client
+#  def loop
+#    send_command :subscribe, subject: 'loop', sid: 2
+#    loop do
+#      send_command :pub, subject: 'loop', message: Time.now.to_f.to_s
+#    end
+#  end
+#end
+
 c = CelluNATS::Protocol::Client.new
 c.async.run
+#c.loop
 
-c.send_command :subscribe, subject: 'foo', sid: 2
+c.send_command :subscribe, subject: 'loop', sid: 2
+    loop do
+      c.send_command :publish, subject: 'loop', message: Time.now.to_f.to_s
+      sleep 0.25
+    end
+loop { true }
+#require 'pry'
+#binding.pry
 
-require 'pry'
-binding.pry
-
-#encoder = CelluNATS::Protocol::Encoder.new
-#decoder = CelluNATS::Protocol::Decoder.new
-#
-#puts encoder.connect verbose: true, pedantic: false
-#puts encoder.subscribe subject: 'foo', sid: 2
-#puts encoder.publish subject: 'foo', msg: 'mundo!'
-#puts encoder.ping
-#
-#puts "----"
-#
-#puts decoder.parse "MSG foo 2 6"
-#
-#puts decoder.parse "MSG help 2 _INBOX.ce49335bdb176fefe61bc4aaca 0"

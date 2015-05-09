@@ -1,6 +1,4 @@
-#require 'socket'
 require 'celluloid/io'
-
 
 module CelluNATS
   module Protocol
@@ -15,13 +13,11 @@ module CelluNATS
       attr_accessor :config, :socket, :encoder, :decoder
 
       def shutdown
-        #puts "Closing socket"
         socket.close if socket
       end
 
 
       def initialize(opt={})
-        #puts "*** Starting server!"
         @config = opt
         @expecting_payload = false
         @encoder = Encoder.new
@@ -30,55 +26,38 @@ module CelluNATS
       end
 
       def send_command(command, *args)
-        ##puts "#{command}=#{args}"
-        cmd = encoder.send command, *args
-        socket.puts cmd
-        #puts cmd
+        socket.write encoder.send command, *args
       end
 
       def run
         loop do
-          if @expecting_payload != false
-            ##puts "READING PAYLAOD!"
-            payload = socket.read @expecting_payload[:size]
-            diff = (Time.now.to_f*1000).to_i - payload.to_i
-            #puts " --> PAYLOAD #{@expecting_payload[:sub]}=#{payload} ms=#{diff}"
-            puts " --> ms=#{diff}"
-            @expecting_payload = false
-          else
-            #puts "..."
-            handle_message socket.readline(CR_LF)
-          end
+          decoder << socket.readpartial(4096)
+          event = decoder.events.pop
+          handle event unless event.nil?         
         end
       end
 
-      def handle_message(line)
-        #puts line
-        event = decoder.parse line
+      private
+
+      def handle(event)
+        # TODO handle notifications here
         case event[:type]
-          when EXPECT_PAYLOAD
-            ##puts "INCOMING MESSAGE!"
-            @expecting_payload = event
-            #puts @expecting_payload
+          when MESSAGE
+            event[:current] = Time.now.to_f
+            event[:payload] = event[:payload].to_f
+            event[:delay] = (event[:current] - event[:payload]) *1000
+            puts event.to_json
           when INFO
-            #$#puts "RECEIVED INFO, connecting"
-            #@socket.puts encoder.connect verbose: true, pedantic: false
+            STDERR.puts event[:info]
             send_command :connect, verbose: true, pedantic: false
           when OK
             sleep 1
             send_command :ping
           when PING
             send_command :pong
-            #@socket.puts encoder.subscribe subject: 'foo', sid: 2
-          else
-            true
+          when PONG
+            send_command :ping
         end
-      end
-
-      def send_data(data)
-      end
-
-      def receive_data(data)
       end
 
     end
