@@ -10,7 +10,7 @@ module CelluNATS
 
       finalizer :shutdown
 
-      attr_accessor :config, :socket, :encoder, :decoder, :delays
+      attr_accessor :config, :socket
 
       def shutdown
         socket.close if socket
@@ -18,21 +18,25 @@ module CelluNATS
 
 
       def initialize(opt={})
-        @config = opt
-        @expecting_payload = false
-        @encoder = Encoder.new
-        @decoder = Decoder.new
+        #@config = opt
+        #@expecting_payload = false
+        
         @socket = TCPSocket.new '127.0.0.1', '4222'
+        @state = define_state_machine
         #---
-        @delays = []
+        #@delays = []
       end
 
-      def average_delay
-        delays.reduce(&:+) / delays.size
-      end
+      #def average_delay
+      #  delays.reduce(&:+) / delays.size
+      #end
 
       def send_command(command, *args)
-        socket.write encoder.send command, *args
+        if @connected
+          socket.write encoder.send command, *args 
+        else
+          print "-"
+        end
       end
 
       def run
@@ -58,6 +62,7 @@ module CelluNATS
           when INFO
             STDERR.puts event[:info]
             send_command :connect, verbose: true, pedantic: false
+            @connected = true
           when OK
             sleep 1
             send_command :ping

@@ -25,6 +25,7 @@ GEM
     slop (3.6.0)
     spoon (0.0.4)
       ffi
+    statemachine (2.3.0)
     timers (4.0.1)
       hitimes
 
@@ -36,3 +37,4 @@ DEPENDENCIES
   celluloid
   celluloid-io
   pry
+  statemachine

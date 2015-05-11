@@ -27,6 +27,8 @@ c.send_command :subscribe, subject: 'loop', sid: 2
   c.send_command :publish, subject: 'loop', message: Time.now.to_node_timestamp
 end
 
+puts "\n----\n"
+
 loop { true }
 
 require 'pry'

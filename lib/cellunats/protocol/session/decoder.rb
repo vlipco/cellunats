@@ -1,10 +1,15 @@
 require 'celluloid'
 require 'json'
+
+
+
+
 module CelluNATS
   module Protocol
-    class Decoder < String
+    module Decoder
+      include Constants
 
-      include Celluloid
+      #include Celluloid
 
       attr_reader :events
 
@@ -16,25 +21,11 @@ module CelluNATS
 
       def <<(data)
         @buffer << data
-        async.process_buffer
+        parse_buffer
         true # keep simplest return through the proxy
       end
 
-      def process_buffer
-        parse_buffer
-        #puts "processing! expecting=#{@expecting_payload}"
-        if @expecting_payload
-          puts "WAITING FOR PAULAOD"
-          # take a specific amount from the buffer
-        else
-        end
-      end
 
-      #def run
-      #  loop { parse_buffer }
-      #end
-
-      include Constants
 
       def process_payload
         # check that the payload is complete
@@ -54,6 +45,7 @@ module CelluNATS
 
 
       def parse_buffer
+        puts "."
         event = case @buffer
           when MSG_PATTERN
             @expecting_payload = { 
