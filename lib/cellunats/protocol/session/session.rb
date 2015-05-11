@@ -101,7 +101,7 @@ module CelluNATS
         msg[:payload] = msg[:payload].to_i
         msg[:delay] = (msg[:current] - msg[:payload]).to_i
         $logger.debug "RECEIVED: #{msg}"
-        if msg[:delay] > 10
+        if msg[:delay] > 9 # complain on any single digit latency
           $logger.info "DELAY: #{msg[:delay]}ms"
         end
       end
