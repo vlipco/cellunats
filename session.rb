@@ -13,16 +13,16 @@ require 'session'
 chan = 'loop' #SecureRandom.base64
 
 s = CelluNATS::Protocol::Session.new
-#bg = Thread.new do 
-  $logger.debug "=== STARTING SUB"
-  s.send_subscribe subject: chan, sid: 2
-  $logger.debug "=== SUB READY?"
-  s.session.connect 
-  loop do
-    s.read_command
-  end
-#end
-#s.info.symbolize!
-puts "Post to #{chan}"
-binding.pry
+s.send_subscribe subject: chan, queue: chan, sid: 2
+s.async.run
 
+r = CelluNATS::Protocol::Session.new
+r.send_subscribe subject: chan, queue: chan, sid: 2
+r.async.run
+
+t = CelluNATS::Protocol::Session.new
+t.send_subscribe subject: chan, queue: chan, sid: 2
+t.async.run
+
+loop { true }
+#binding.pry

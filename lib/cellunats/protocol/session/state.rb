@@ -42,9 +42,8 @@ module CelluNATS
             event :notify_message, :waiting_command, :notify_message
           end
 
-          #state :disconnectin
-
         end # closes build block
+        
         fsm.context = self
         return fsm
       end

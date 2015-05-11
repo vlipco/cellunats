@@ -15,7 +15,6 @@ end
 
 require 'constants'
 require 'encoder'
-require 'decoder'
 require 'state'
 
 require 'json'
@@ -51,6 +50,7 @@ module CelluNATS
           @info = JSON.parse($1).symbolize.freeze
           session.info # transition state to connecting
           $logger.debug "Server INFO: #{info}"
+          @buffer = ''
         else
           raise "PROTOCOL ERROR, EXPECTED INFO BUT GOT #{incoming_line}"
         end
@@ -65,6 +65,10 @@ module CelluNATS
 
       def read_command
         incoming_line = readline
+        parse_line incoming_line
+      end
+
+      def parse_line(incoming_line)
         $logger.debug "Parsing command: #{incoming_line}"
         case incoming_line
           when OK_PATTERN
@@ -96,13 +100,20 @@ module CelluNATS
         session.notify_message payload
       end
 
+      def run
+        session.connect
+        loop { read_command }
+      end
+
       def notify_message(msg)
         msg[:current] = (Time.now.to_f*1000).to_i
         msg[:payload] = msg[:payload].to_i
         msg[:delay] = (msg[:current] - msg[:payload]).to_i
         $logger.debug "RECEIVED: #{msg}"
         if msg[:delay] > 9 # complain on any single digit latency
-          $logger.info "DELAY: #{msg[:delay]}ms"
+          $logger.info "#{object_id} - DELAY: #{msg[:delay]}ms"
+        #else
+        #  $logger.debug "#{object_id}"
         end
       end
 
