@@ -27,6 +27,8 @@ module CelluNATS
 
     class Session #< Celluloid::IO::TCPSocket
 
+      include Celluloid::IO
+
       attr_reader :info, :socket, :session, :pending
 
       include Encoder
@@ -99,7 +101,9 @@ module CelluNATS
         msg[:payload] = msg[:payload].to_i
         msg[:delay] = (msg[:current] - msg[:payload]).to_i
         $logger.debug "RECEIVED: #{msg}"
-        $logger.info "DELAY: #{msg[:delay]}ms"
+        if msg[:delay] > 10
+          $logger.info "DELAY: #{msg[:delay]}ms"
+        end
       end
 
       def connected?
