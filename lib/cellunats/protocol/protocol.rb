@@ -1,3 +1,4 @@
+require 'misc'
 
 module CelluNATS
   module Protocol

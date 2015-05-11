@@ -30,7 +30,8 @@ module CelluNATS
         raise EncodeError.new "Subject is missing" unless opt[:subject]
         #opt[:reply] ||= EMPTY
         opt[:message] ||= ''
-        encode PUB, opt[:subject], opt[:reply], opt[:message].bytesize, CR_LF, opt[:message].to_s
+        opt[:message] = opt[:message].to_s # be permissive on the type
+        encode PUB, opt[:subject], opt[:reply], opt[:message].bytesize, CR_LF, opt[:message]
       end
 
       def subscribe(opt)

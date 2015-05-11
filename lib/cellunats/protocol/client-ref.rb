@@ -10,7 +10,7 @@ module CelluNATS
 
       finalizer :shutdown
 
-      attr_accessor :config, :socket, :encoder, :decoder, :delays
+      attr_accessor :config, :socket, :encoder, :decoder
 
       def shutdown
         socket.close if socket
@@ -23,12 +23,6 @@ module CelluNATS
         @encoder = Encoder.new
         @decoder = Decoder.new
         @socket = TCPSocket.new '127.0.0.1', '4222'
-        #---
-        @delays = []
-      end
-
-      def average_delay
-        delays.reduce(&:+) / delays.size
       end
 
       def send_command(command, *args)
@@ -49,12 +43,10 @@ module CelluNATS
         # TODO handle notifications here
         case event[:type]
           when MESSAGE
-            print "<"
-            event[:current] = Time.now.to_node_timestamp
-            event[:payload] = event[:payload].to_i
-            event[:delay] = event[:current] - event[:payload]
-            @delays.push event[:delay]
-            #puts event.to_json
+            event[:current] = Time.now.to_f
+            event[:payload] = event[:payload].to_f
+            event[:delay] = (event[:current] - event[:payload]) *1000
+            puts event.to_json
           when INFO
             STDERR.puts event[:info]
             send_command :connect, verbose: true, pedantic: false

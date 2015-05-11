@@ -21,11 +21,14 @@ c.async.run
 #c.loop
 
 c.send_command :subscribe, subject: 'loop', sid: 2
-    loop do
-      c.send_command :publish, subject: 'loop', message: Time.now.to_f.to_s
-      sleep 0.25
-    end
-loop { true }
-#require 'pry'
-#binding.pry
 
+1000.times do
+  print ">"
+  c.send_command :publish, subject: 'loop', message: Time.now.to_node_timestamp
+end
+
+loop { true }
+
+require 'pry'
+binding.pry
+#puts "#{c.average_delay}ms (#{c.delays.size}req.)"
