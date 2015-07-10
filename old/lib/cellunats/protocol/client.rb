@@ -10,6 +10,9 @@ module CelluNATS
 
       include Celluloid::IO
 
+      include Celluloid::Notifications
+
+
       finalizer :shutdown
 
       attr_accessor :config, :socket, :encoder, :decoder
@@ -41,9 +44,11 @@ module CelluNATS
           if @expecting_payload != false
             ##puts "READING PAYLAOD!"
             payload = socket.read @expecting_payload[:size]
-            diff = (Time.now.to_f*1000).to_i - payload.to_i
+            #diff = (Time.now.to_f*1000).to_i - payload.to_i
             #puts " --> PAYLOAD #{@expecting_payload[:sub]}=#{payload} ms=#{diff}"
-            puts " --> ms=#{diff}"
+            #puts " --> ms=#{diff}"
+            # notify any interested handlers
+            publish 'payload', { sub: @expecting_payload[:sub], payload: payload}
             @expecting_payload = false
           else
             #puts "..."
@@ -75,11 +80,11 @@ module CelluNATS
         end
       end
 
-      def send_data(data)
-      end
-
-      def receive_data(data)
-      end
+      #def send_data(data)
+      #end
+#
+      #def receive_data(data)
+      #end
 
     end
   end
