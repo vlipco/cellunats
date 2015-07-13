@@ -10,7 +10,7 @@ session = NATS::Session.new
 
 session.async.run
 #puts "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-session.subscribe subject: "foo", sid: 2
+session.subscribe "foo", queue: 'workers'
 
 #binding.pry
 

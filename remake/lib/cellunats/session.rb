@@ -14,6 +14,7 @@ module NATS
     def initialize
       @socket = Protocol::Socket.new 'localhost', 4222
       @context = Protocol::Context.new @socket
+      @subscriptions = Hashie::Mash.new
     end
 
     def run
@@ -23,20 +24,14 @@ module NATS
       end
     end
 
-    # TODO options  default
-    def publish(opt)
-      raise EncodeError.new "Subject is missing" unless opt[:subject]
-      #opt[:reply] ||= EMPTY
-      opt[:msg] ||= ''
-      @socket.push_line PUB, opt[:subject], opt[:reply], 
-        opt[:msg].bytesize, CR_LF, opt[:msg].to_s
+    def publish(subject, msg='', reply_to: nil)
+      @socket.push_line PUB, subject, reply_to, msg.bytesize, CR_LF, msg.to_s
     end
 
-    def subscribe(opt)
-      raise EncodeError.new "Subject is missing" unless opt[:subject]
-      opt[:queue] ||= EMPTY # empty by default
-      puts "SUBSCRIBING to #{opt}"
-      @socket.push_line SUB, opt[:subject], opt[:queue], opt[:sid]
+    def subscribe(subject, queue: '')
+      puts "SUBSCRIBING to #{subject}"
+      sid = @subscriptions.keys.length + 1
+      @socket.push_line SUB, subject, queue, sid
     end
 
     def request(opt)
