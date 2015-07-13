@@ -6,12 +6,21 @@ module NATS
     include Protocol::Constants
     include Celluloid
 
-    def run
+    # the IO modules avoids the run loop to block write operations
+    # on the socket so that both operations can be handled concurrently
+    include Celluloid::IO
+
+
+    def initialize
       @socket = Protocol::Socket.new 'localhost', 4222
-      subscribe subject: "foo", sid: 2
-      @socket.run
-      #byebug
-      #loop { true }
+      @context = Protocol::Context.new @socket
+    end
+
+    def run
+      @context.connect
+      loop do
+        @context.process_line @socket.receive_line
+      end
     end
 
     # TODO options  default
@@ -28,6 +37,10 @@ module NATS
       opt[:queue] ||= EMPTY # empty by default
       puts "SUBSCRIBING to #{opt}"
       @socket.push_line SUB, opt[:subject], opt[:queue], opt[:sid]
+    end
+
+    def request(opt)
+      "_INBOX.#{SecureRandom.hex(13)}"
     end
 
     # Cancel a subscription.

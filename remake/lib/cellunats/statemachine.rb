@@ -1,5 +1,3 @@
-require 'statemachine'
-
 module NATS
   module Protocol
     class StateMachine

@@ -7,17 +7,6 @@ module NATS
       include Protocol::Constants
       include Celluloid::Logger
 
-
-      # access to StateMachine for events
-      # and to the socket for socket operations
-      attr_reader :current_line
-
-      # delegate missing methods to the statemachine
-      # this allows external triggering of events on the sm
-      #def method_missing(event)
-      #  @sm.send event
-      #end
-
       def connect
         @sm.connect
       end
@@ -30,7 +19,6 @@ module NATS
       def disconnect
         @sm.disconnect
       end
-
 
       def initialize(socket,opt={})
         @socket = socket
@@ -97,8 +85,6 @@ module NATS
       def receive_payload_action
         payload_body = @socket.read @payload_data[:size]
         info "PAYLOAD: #{payload_body}"
-        #debug "Reading the amount of bytes of a payload=#{@payload_data}"
-        #debug "notifying & then listening again"
         @sm.wait_line
       end
 

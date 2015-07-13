@@ -5,20 +5,6 @@ module NATS
       include Protocol::Constants
       include Celluloid::Logger
 
-      def initialize(host,port)
-        super host, port
-        # build the context and pass this socket
-        @context = Context.new self
-      end
-
-      def run
-        @context.connect
-        loop do
-          #@context.current_line = receive_line
-          @context.process_line receive_line
-        end
-      end
-
       def expect_ok
         incoming = receive_line
         if incoming =~ OK_PATTERN
@@ -28,7 +14,7 @@ module NATS
         end
       end
 
-      # TODO make this async
+      # TODO make this cache command if the connection isn't ready
       # OPTIONAL handle write buffer through the context to centralize ops?
       def push_line(*commands)
         encoded_line = encode commands

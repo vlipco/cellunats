@@ -6,6 +6,8 @@ require 'hashie'
 require 'socket'
 require 'celluloid'
 require 'celluloid/io'
+require 'statemachine'
+require 'securerandom'
 
 # internal deps
 require "cellunats/constants"
