@@ -1,18 +1,11 @@
 require 'rubygems'
-require 'statemachine'
-require 'pry'
 require 'byebug'
-#require 'celluloid/io'
-require 'socket'
+require 'pry'
 
-$LOAD_PATH.unshift '../lib/'
+$LOAD_PATH.unshift File.expand_path('../../lib',__FILE__)
 
-require 'context.rb'
-require 'statemachine.rb'
-require 'session.rb'
+require 'cellunats'
 
 session = NATS::Session.new
 
-session.connect
-
-#binding.pry
+session.run
