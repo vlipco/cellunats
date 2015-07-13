@@ -4,7 +4,7 @@ module NATS
     # since most write operations are handled by the session class
     class Context 
 
-      include Protocol::Constants
+      #include Protocol::Constants
       include Celluloid::Logger
 
       def connect
@@ -58,8 +58,9 @@ module NATS
         end
         case @current_line
           when MSG_PATTERN
-            @payload_data = { sub: $1, sid: $2.to_i, reply: $4, size: $5.to_i }
-            debug "Expecting NATS payload: #{@payload_data}"
+            command_data = { sub: $1, sid: $2.to_i, reply: $4, msg_size: $5.to_i }
+            @payload_data = Hashie::Mash.new command_data
+            debug "Expecting NATS payload: #{@payload_data.to_h}"
             @sm.expect_payload
           when OK_PATTERN
             debug "Received NATS OK"
@@ -83,8 +84,9 @@ module NATS
       end
 
       def receive_payload_action
-        payload_body = @socket.read @payload_data[:size]
-        info "PAYLOAD: #{payload_body}"
+        @payload_data.body = @socket.read @payload_data.msg_size
+        debug "Message received: #{@payload_data.to_h}"
+        Celluloid::Notifications.publish @socket.topic, @payload_data
         @sm.wait_line
       end
 

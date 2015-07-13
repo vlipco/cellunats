@@ -10,7 +10,7 @@ require 'statemachine'
 require 'securerandom'
 
 # internal deps
-require "cellunats/constants"
+require "cellunats/protocol"
 require "cellunats/context"
 require "cellunats/statemachine"
 require "cellunats/socket"

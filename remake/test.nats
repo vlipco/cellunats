@@ -1,5 +1,5 @@
 CONNECT {"verbose":true,"pedantic":false}
 SUB foo 2
 PUB foo 6
-mundo!
+aloha!
 PING
