@@ -17,6 +17,8 @@ Celluloid.logger = $logger
 require 'celluloid/autostart'
 session = NATS::Session.new
 
+Celluloid::Actor[:session] = session
+
 session.async.run
 
 5.times do

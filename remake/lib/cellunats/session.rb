@@ -23,34 +23,26 @@ module NATS
     def initialize
       @socket = Protocol::Socket.new 'localhost', 4222
       @context = Protocol::Context.new @socket
-      @sub_handlers = Hashie::Mash.new
+      #@sub_handlers = Hashie::Mash.new
     end
 
     def new_message(topic, data)
       debug "Handling incoming message to #{data.sub}"
-      if @sub_handlers.key? data.sub
-        block = @sub_handlers[data.sub]
-        block_params = [data.body]
-        block_params << data.reply if block.arity > 1
-        # TMP see if block make things slow
-          diff = Time.now.to_f - data.body.to_f
-          puts "#{data.sub} raw #{diff*1000}"
-          #puts "#{data.sub} blk #{block.call *block_params}"
-        # delete single use handler
-        if data.sub =~ INBOX_PATTERN
-          @sub_handlers.delete data.sub 
-        end
-      else
-        raise "Unexpected error: Missing subscription to #{data.sub}"
-      end
+      # TMP see if block make things slow
+      diff = Time.now.to_f - data.body.to_f
+      puts "#{data.sub} RCV #{diff*1000}"
     end
 
     def run
       @context.connect
       subscribe_to_notifications @socket.topic, :new_message
       loop do
-        @context.process_line @socket.receive_line
+        async.get_line
       end
+    end
+
+    def get_line
+      @context.process_line @socket.receive_line
     end
 
     def publish(sub, msg='', reply: nil)
@@ -58,16 +50,15 @@ module NATS
       @socket.push_line PUB, sub, reply, msg.bytesize, CR_LF, msg.to_s
     end
 
-    def subscribe(sub, queue: '', &block)
+    def subscribe(sub, queue: '')
       debug "Subscribing to #{sub} queue=#{queue}"
-      @sub_handlers[sub] = block
       @socket.push_line SUB, sub, queue, next_sid
     end
 
-    def request(sub,msg='',&block)
+    def request(sub,msg='')
       inbox = "_INBOX.#{SecureRandom.hex(13)}"
-      subscribe inbox, &block
-      async.publish sub, msg, reply: inbox
+      subscribe inbox
+      publish sub, msg, reply: inbox
     end
 
     # ensure sids are unique per session using a counter

@@ -4,10 +4,10 @@ module NATS
     # since most write operations are handled by the session class
     class Context 
 
-      include Celluloid
+      #include Celluloid
       include Celluloid::Logger
 
-      exclusive # avoid concurrent operations on this state
+      #exclusive # avoid concurrent operations on this state
 
       def connect
         @sm.connect
@@ -69,9 +69,12 @@ module NATS
 
       def receive_payload_action(data)
         data.body = @socket.read data.msg_size
+        diff = (Time.now.to_f - data.body.to_f)*1000
+        puts diff
         data.body = Time.now.to_f # TMP: to see time until real arrival
-        debug "Message received: #{data.to_h}"
-        Celluloid::Notifications.publish @socket.topic, data
+        #debug "Message received: #{data.to_h}"
+        #Celluloid::Notifications.publish @socket.topic, data
+        Actor[:session].async.new_message @socket.topic, data
         @sm.wait_line
       end
 
