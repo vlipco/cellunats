@@ -10,6 +10,8 @@ module NATS
       
       attr_reader :server_info, :disconnected
 
+      # todo receive connection configuration
+
       def initialize(socket)
         @socket = socket
         @disconnected = true
@@ -41,6 +43,8 @@ module NATS
         write UNSUB, opt[:sid], opt[:max].to_s
       end
 
+      private
+
       def connect
         raise "Missing server info, is the socket already open?" unless @server_info
         opt = Hashie::Mash.new verbose: false, pedantic: false
@@ -51,8 +55,6 @@ module NATS
         write CONNECT, cs.to_json
         @disconnected = false
       end
-
-      private
 
       def notify_message
         puts "NOTIFICATION: #{@msg.to_h}"

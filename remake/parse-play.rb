@@ -27,7 +27,6 @@ driver = NATS::Protocol::Driver.new Handler.new
 
 until queue.empty?
   driver.parse queue.pop
-  driver.connect if driver.server_info && driver.disconnected
 end
 
 driver.request "echo", Time.now.to_f

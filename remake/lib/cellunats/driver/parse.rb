@@ -14,6 +14,7 @@ module NATS
               when INFO_PATTERN
                 @buf = $'
                 @server_info = Hashie::Mash.new JSON.parse($1)
+                connect
               when PING_PATTERN
                 @buf = $'
                 write PONG
