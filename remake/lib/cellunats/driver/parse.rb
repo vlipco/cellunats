@@ -3,14 +3,19 @@ module NATS
     class Driver
 
       def parse(data)
-        @buf = @buf ? @buf << data : data
-        while @buf
+        #puts "****************** PROCESSING: #{data}"
+        @buf << data
+        until @buf.empty?
           if @waiting_control_line
             case @buf
               when MSG_PATTERN
-                @msg = Hashie::Mash.new sub: $1, sid: $2.to_i, reply: $4, bytesize: $5.to_i
+                @msg = Hashie::Mash.new sub: $1, sid: $2.to_i, reply: $4, payload_size: $5.to_i
+                #byebug
                 @buf = $'
+                #byebug
                 @waiting_control_line = false
+                #@needed = 
+#                puts "WAITING PAYLOAD"
               when INFO_PATTERN
                 @buf = $'
                 @server_info = Hashie::Mash.new JSON.parse($1)
@@ -28,16 +33,22 @@ module NATS
                 @buf = $' # remove the noop line from the buffer
               else # we cannot fully understand the line, more data required
                 #binding.pry
+                #puts "----- #{@buf}"
                 return
             end
             # if this is empty, set to nil to close the loop
-            @buf = nil if (@buf && @buf.empty?)
+            #@buf = nil if (@buf && @buf.empty?)
           else # waiting for payload
-            return unless @buf.bytesize >= (@msg.bytesize + CR_LF.bytesize)
-            @msg.body = @buf.slice(0, @msg.bytesize) # take the amount from the buffer
-            @buf = @buf.slice (@msg.bytesize + CR_LF.bytesize), @buf.bytesize
+            #puts "GETTING PAYLOAD"
+            #byebug
+            return unless @buf.bytesize >= (@msg.payload_size + CR_LF.bytesize)
+            #puts "BUFFER ENOUGH!"
+            @msg.body = @buf.slice(0, @msg.payload_size) # take the amount from the buffer
+            @buf = @buf.slice (@msg.payload_size + CR_LF.bytesize), @buf.bytesize
             @waiting_control_line = true
+            #puts "+msg"
             notify_message
+            #puts "*****************"
           end
         end
       end

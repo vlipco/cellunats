@@ -17,16 +17,7 @@ module NATS
       CR_LF = "\r\n".freeze
       SPACE = ' '.freeze
 
-      MSG_PATTERN      = %r{
-          \A
-          MSG      \s+    #       the command and spaces
-          ([^\s]+) \s+    # 1   - the subject, spaces
-          ([^\s]+) \s+    # 2   - the id the client gave to for the subject, spaces
-          # the next optional match includes 3, the whole match, and 4, the inner match
-          ( (\S+)  \s+ )? # 4   - maybe a reply channel, spaces
-          (\d+)           # 5   - the length of the message payload
-          \r\n
-        }xi.freeze        # case insensitive, ignores whitespace
+      MSG_PATTERN      = /\AMSG\s+([^\s]+)\s+([^\s]+)\s+(([^\s]+)[^\S\r\n]+)?(\d+)\r\n/i
 
       OK_PATTERN       = / \A \+OK \s \r\n* \r\n       /ix.freeze
       ERROR_PATTERN    = / \A -ERR \s+ ('.+')? \r\n    /ix.freeze

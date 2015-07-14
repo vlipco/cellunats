@@ -29,7 +29,9 @@ until queue.empty?
   driver.parse queue.pop
 end
 
-driver.request "echo", Time.now.to_f
+150.times do
+  driver.request "echo", Time.now.to_f
+end
 
 #binding.pry
 

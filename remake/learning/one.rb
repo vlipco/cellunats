@@ -1,8 +1,11 @@
 require 'rubygems'
-require 'byebug'
+#require 'byebug'
 require 'pry'
 
 $LOAD_PATH.unshift File.expand_path('../../lib',__FILE__)
+
+#require 'celluloid'
+#require 'celluloid/autostart'
 
 require 'cellunats'
 
@@ -14,15 +17,19 @@ end
 
 Celluloid.logger = $logger
 
-require 'celluloid/autostart'
-session = NATS::Session.pool size: 5
+#binding.pry
+session = NATS::Session.new
 
-#Celluloid::Actor[:session] = session
+sleep 0.5
 
-#session.async.run
+session.driver.subscribe 'foo'
+#session.driver.subscribe 'loop2'
+#session.driver.subscribe 'loop3'
 
-3.times do
-  session.async.latency_echo
-end
+#def do_echo
+#  session.driver.request "echo", Time.now.to_f
+#end
 
 loop { true }
+
+diff = (Time.now.to_f*1000).to_i - @msg.body.to_i

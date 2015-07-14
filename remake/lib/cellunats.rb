@@ -8,12 +8,15 @@ require 'socket'
 #require 'celluloid/current'
 require 'celluloid'
 require 'celluloid/io'
+require 'celluloid/autostart'
+
 
 require 'statemachine'
 require 'securerandom'
 
 # internal deps
 require "cellunats/driver"
+require "cellunats/session"
 #require "cellunats/protocol"
 #require "cellunats/context"
 #require "cellunats/statemachine"

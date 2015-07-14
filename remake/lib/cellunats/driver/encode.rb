@@ -17,7 +17,8 @@ module NATS
 
       private 
 
-      def write(*elements)
+      def write(*elements, force: false)
+        #raise "WAIT!" if @disconnected && force == false
         @socket.write encode(*elements)
       end
 

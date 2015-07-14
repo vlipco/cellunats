@@ -46,18 +46,21 @@ module NATS
       private
 
       def connect
+        puts "CONNECTING"
+        #byebug
         raise "Missing server info, is the socket already open?" unless @server_info
         opt = Hashie::Mash.new verbose: false, pedantic: false
         cs = { :verbose => opt[:verbose], :pedantic => opt[:pedantic] }
         # TODO add cs[:user] & cs[:pass] support for auth
         raise "Auth not implemented" if @server_info.auth_required
         cs[:ssl_required] = opt[:ssl] if opt[:ssl]
-        write CONNECT, cs.to_json
+        write CONNECT, cs.to_json, force: true
         @disconnected = false
+        puts "READY!"
       end
 
       def notify_message
-        puts "NOTIFICATION: #{@msg.to_h}"
+        Celluloid::Notifications.notifier.publish "nats:#{@socket.__id__}", @msg
         @msg = nil
       end
 
