@@ -2,7 +2,7 @@ module NATS
   module Protocol 
     class Driver
 
-      def encode(*elements)
+       def encode(*elements)
         elements.push CR_LF # All commands end with the control line
         elements.map! do |e| 
           case e
@@ -13,6 +13,12 @@ module NATS
         end
         encoded = elements.flatten.compact.join(SPACE)
         encoded.gsub("#{SPACE}#{CR_LF}", CR_LF).gsub("#{CR_LF}#{SPACE}", CR_LF)
+      end
+
+      private 
+
+      def write(*elements)
+        @socket.write encode(*elements)
       end
 
     end # Driver class
