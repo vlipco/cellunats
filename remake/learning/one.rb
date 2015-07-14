@@ -15,13 +15,13 @@ end
 Celluloid.logger = $logger
 
 require 'celluloid/autostart'
-session = NATS::Session.new
+session = NATS::Session.pool size: 5
 
-Celluloid::Actor[:session] = session
+#Celluloid::Actor[:session] = session
 
-session.async.run
+#session.async.run
 
-5.times do
+3.times do
   session.async.latency_echo
 end
 

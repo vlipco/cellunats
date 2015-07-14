@@ -13,8 +13,9 @@ require 'statemachine'
 require 'securerandom'
 
 # internal deps
-require "cellunats/protocol"
-require "cellunats/context"
-require "cellunats/statemachine"
-require "cellunats/socket"
-require "cellunats/session"
+require "cellunats/driver"
+#require "cellunats/protocol"
+#require "cellunats/context"
+#require "cellunats/statemachine"
+#require "cellunats/socket"
+#require "cellunats/session"
