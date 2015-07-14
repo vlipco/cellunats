@@ -3,11 +3,9 @@ module NATS
   # and socket write operations and incoming messages notifications
   class Session
 
-    #include Protocol::Constants
     include Celluloid
     include Celluloid::Logger
     include Celluloid::Notifications
-
 
     # the IO modules avoids the run loop to block write operations
     # on the socket so that both operations can be handled concurrently
@@ -19,15 +17,13 @@ module NATS
 
     # this make the blocks passed to subscribe be executed on the
     # context of this class, instead of going to the senders thread
-    execute_block_on_receiver :subscribe
-    execute_block_on_receiver :request
+    #execute_block_on_receiver :subscribe
+    #execute_block_on_receiver :request
 
     def initialize
       @socket = Protocol::Socket.new 'localhost', 4222
       @context = Protocol::Context.new @socket
       @sub_handlers = Hashie::Mash.new
-      @rpc_handlers = Hashie::Mash.new
-      @sid = 1
     end
 
     def new_message(topic, data)
@@ -36,7 +32,10 @@ module NATS
         block = @sub_handlers[data.sub]
         block_params = [data.body]
         block_params << data.reply if block.arity > 1
-        block.call *block_params
+        # TMP see if block make things slow
+          diff = Time.now.to_f - data.body.to_f
+          puts "#{data.sub} raw #{diff*1000}"
+          #puts "#{data.sub} blk #{block.call *block_params}"
         # delete single use handler
         if data.sub =~ INBOX_PATTERN
           @sub_handlers.delete data.sub 
@@ -50,7 +49,6 @@ module NATS
       @context.connect
       subscribe_to_notifications @socket.topic, :new_message
       loop do
-        puts "."
         @context.process_line @socket.receive_line
       end
     end
@@ -74,12 +72,13 @@ module NATS
 
     # ensure sids are unique per session using a counter
     def next_sid
+      @sid ||= 1
       @sid = @sid + 1
     end
 
     def latency_echo
-      request "echo", Time.now.to_i do |response|
-        puts Time.now.to_f - response.to_f 
+      request "echo", Time.now.to_f do |response|
+        (Time.now.to_f - response.to_f)*1000
       end
     end
 

@@ -4,16 +4,18 @@ module NATS
     # since most write operations are handled by the session class
     class Context 
 
-      #include Protocol::Constants
+      include Celluloid
       include Celluloid::Logger
+
+      exclusive # avoid concurrent operations on this state
 
       def connect
         @sm.connect
       end
 
       def process_line(line)
-        @current_line = line
-        @sm.process_line
+        #@current_line = line
+        @sm.process_line line
       end
 
       def disconnect
@@ -22,71 +24,54 @@ module NATS
 
       def initialize(socket,opt={})
         @socket = socket
-        # build the statemachine with self as the context
-        @sm = Protocol::StateMachine.build self
+        @sm = Protocol::StateMachine.build self # self as context
         @config = opt[:config] || {}
-        @processed_lines = 0
-        @current_line = nil
       end
 
       private
 
-      def receive_server_info_action
-        if @socket.receive_line =~ INFO_PATTERN
-          @server_info = Hashie::Mash.new JSON.parse($1)
-          debug "Server INFO: #{@server_info}"
-        else
-          raise "NATS protocol error, expecting INFO but received: #{info_command}"
-        end
-      end
-
-      def establish_connection_action
-        opt = { verbose: true, pedantic: false }
+      def connect_action
+        opt = Hashie::Mash.new verbose: false, pedantic: false
         cs = { :verbose => opt[:verbose], :pedantic => opt[:pedantic] }
         # TODO add cs[:user] & cs[:pass] support for auth
-        raise "Auth not implemented" if @server_info.auth_required
+        raise "Auth not implemented" if @socket.auth_required?
         cs[:ssl_required] = opt[:ssl] if opt[:ssl]
         @socket.push_line CONNECT, cs.to_json
-        @socket.expect_ok # wait for the server's ACK
+        @socket.expect_ok if opt.verbose
         debug "NATS connection established"
         @sm.wait_line # transition to a connected state
       end
 
-      def process_line_action
-        if @current_line.nil?
-          raise "NATS protocol context error: trying to process with current_line being nil"
-        end
-        case @current_line
+      def process_line_action(line)
+        case line
           when MSG_PATTERN
-            command_data = { sub: $1, sid: $2.to_i, reply: $4, msg_size: $5.to_i }
-            @payload_data = Hashie::Mash.new command_data
-            debug "Expecting NATS payload: #{@payload_data.to_h}"
-            @sm.expect_payload
-          when OK_PATTERN
-            debug "Received NATS OK"
-            true # noop
+            data = Hashie::Mash.new sub: $1, sid: $2.to_i, reply: $4, msg_size: $5.to_i
+            debug "Expecting NATS payload: #{data.to_h}"
+            @sm.receive_payload data
+          #when OK_PATTERN
+          #  debug "Received NATS OK"
+          #  true # noop
           when ERROR_PATTERN
             raise "NATS error: #{$1}"
           when PING_PATTERN
             debug "Received NATS PING, replying with PONG"
             @socket.push_line PONG
-          when PONG_PATTERN
-            debug "Received NATS PONG"
-            true # noop
-          when EMPTY
+          #when PONG_PATTERN
+          #  debug "Received NATS PONG"
+          #  true # noop
+          when EMPTY, PONG_PATTERN, OK_PATTERN
             true # noop
           else
+            #true
             raise "Unknown NATS command: #{@current_line}"
-        end # case matching
-        # TODO count bytes as well?
-        @processed_lines = @processed_lines + 1
-        @current_line = nil
+        end
       end
 
-      def receive_payload_action
-        @payload_data.body = @socket.read @payload_data.msg_size
-        debug "Message received: #{@payload_data.to_h}"
-        Celluloid::Notifications.publish @socket.topic, @payload_data
+      def receive_payload_action(data)
+        data.body = @socket.read data.msg_size
+        data.body = Time.now.to_f # TMP: to see time until real arrival
+        debug "Message received: #{data.to_h}"
+        Celluloid::Notifications.publish @socket.topic, data
         @sm.wait_line
       end
 

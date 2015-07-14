@@ -19,11 +19,7 @@ session = NATS::Session.new
 
 session.async.run
 
-session.subscribe "echo" do |msg, reply|
-  session.publish reply, msg
-end
-
-10.times do
+5.times do
   session.async.latency_echo
 end
 

@@ -1,0 +1,5 @@
+CONNECT {"verbose":false,"pedantic":false}
+SUB foo 2
+PUB foo 6
+aloha!
+PING

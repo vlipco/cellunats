@@ -50,4 +50,5 @@ module NATS
     end
 
   end # Protocol module
+
 end # NATS module

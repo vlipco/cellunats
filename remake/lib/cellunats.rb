@@ -4,8 +4,11 @@ $LOAD_PATH.unshift File.dirname(__FILE__)
 require 'json'
 require 'hashie'
 require 'socket'
+
+#require 'celluloid/current'
 require 'celluloid'
 require 'celluloid/io'
+
 require 'statemachine'
 require 'securerandom'
 
